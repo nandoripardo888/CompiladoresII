@@ -1,0 +1,6 @@
+program teste
+	real: a
+begin 
+	read(a);
+  	a := 5.0 + 2.0 * 3.0
+end

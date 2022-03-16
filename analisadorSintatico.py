@@ -1,6 +1,9 @@
+from inspect import stack
 from ntpath import join
 from os import scandir
+from xmlrpc.client import boolean
 from analisadorLexico import *
+from CStack import Stack
 
 
 class tabelaHsh():
@@ -8,6 +11,7 @@ class tabelaHsh():
   #[termo,tipo,valor]
     def __init__(self):
         self.tabelaSimbolo = []
+        self.enderecoRelativo = 0
 
     def emTabela(self,termo):    
         for elemento in self.tabelaSimbolo:
@@ -21,10 +25,11 @@ class tabelaHsh():
         else:
             pass
     
-    # 5 valores -> termo|token|valor|usado|tipo <-#
+    # 5 valores -> termo|token|valor|usado|tipo|EnderecoRelativo <-#
     def inserir(self,token,termo,tipo,linha):
         if not(self.emTabela(termo)):
-            self.tabelaSimbolo.append([termo,token,"","",tipo])
+            self.tabelaSimbolo.append([termo,token,"","",tipo,self.enderecoRelativo])
+            self.enderecoRelativo+=1
         else:
             raise Exception('Erro semantico, já foi declarado uma variável com este mesmo nome "'+ termo +'" --> LINHA:' + str(linha))
 
@@ -39,6 +44,12 @@ class tabelaHsh():
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 return elemento[4]
+    
+    def getEnderecoRelativo(self,termo,linha):
+        self.simboloEncontrado(termo,linha)
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo:
+                return elemento[5]
 
     def setVarUtilizada(self,termo,linha):
         self.simboloEncontrado(termo,linha)
@@ -46,6 +57,7 @@ class tabelaHsh():
             if elemento[0] == termo:
                 elemento[3] = 'used'
                 
+    
 
 
     
@@ -53,11 +65,11 @@ def escreverDocumento(path,lista,listaVar):
     with open(path, 'w') as f:
         f.write("#"*40 + "\n" + "#"*40 + "\n")
         f.write("\t\t\t\tVARIAVEIS\n")
-        f.write("#"*40 + "\n")
         f.write("%s\n" % " | ".join(["termo","token","valor","usado","tipo"]))
+        f.write("#"*40 + "\n")
         for item in listaVar:
             #f.write("%s\n" % item)
-            f.write("%s\n" % '|'.join(item))
+            f.write("%s\n" % '|'.join(map(str,item)))
         f.close
         f.write("#"*40 + "\n" + "#"*40 + "\n")
         f.write("#"*40 + "\n" + "#"*40 + "\n")
@@ -73,12 +85,32 @@ class AnalisadorSintatico:
     arquivo = ""
     memoria={"termo":"","token":"","valor":"","usado":"",'tipo':""}
     
+    # FUNÇÕES DE GERAÇÃO DE CODIGO
+    def gerarCodigoDeOperacaoVariavel(self, termo):
+        #se ControleOperacaoVariavel
+        # 1 - está declarando variavel
+        # 2 - está imprimindo variavel(WRITE)
+        # default - está escrevendo variavel(READ)
+        if self.ControleOperacaoVariavel == 1 :
+            self.stackCodigoGerado.push(['ALME', 1]) #cod declarar variável
+        elif self.ControleOperacaoVariavel == 2 :
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.scan.LINHA)])
+        else:
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.scan.LINHA)]) #escreve no endereço relativo
+
+
+         
+
+    # -----------------------------
 
     def __init__(self,path):
         self.scan = ScannerLexema(path)
         self.path = path
         self.tabelaHASH = tabelaHsh()
         self.tokens_saida = []
+        self.stackCodigoGerado = Stack()
+        #VARIAVEIS DE CONTROLE
+        self.ControleOperacaoVariavel = 1 # controla <variveis> ao usar a função gerarCodigoDeOperacaoVariavel
 
     def obtemSimbolo(self):
         self.token = self.scan.NextToken()
@@ -101,6 +133,7 @@ class AnalisadorSintatico:
         print("<programa>")
         if self.simbolo.termo == "program":
             self.obtemSimbolo()
+            self.stackCodigoGerado.push(['INPP', '']) #cod inicia programa
             if self.simbolo.tipo == "ident":
                 self.obtemSimbolo()
                 self.corpo()
@@ -117,6 +150,7 @@ class AnalisadorSintatico:
             self.obtemSimbolo()
             self.comandos()
             if self.simbolo.termo == "end":
+                self.stackCodigoGerado.push(['PARA', 0]) #cod parar o programa
                 self.obtemSimbolo()
             else:
                 raise Exception('Erro sintatico, esperado "end" LINHA:' + str(self.scan.LINHA))
@@ -172,13 +206,21 @@ class AnalisadorSintatico:
         else:
             pass
 
-    def parIdent(self):
+    def parIdent(self, tipoOperacao):
+        #se tipoOperacao
+        # 1 - está imprimindo variavel(WRITE)
+        # 2 - está escrevendo variavel(READ)
         self.tokens_saida.append("<parIdent>")
         print("<parIdent>")
         if self.simbolo.termo == "(":
             self.obtemSimbolo()
             if self.simbolo.tipo == "ident":
                 self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
+                #cod faz imprime ou READ ou WRITE
+                if tipoOperacao == 1 :
+                    self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)])
+                elif tipoOperacao == 2:
+                    self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)]) #escreve no endereço relativo
                 self.obtemSimbolo()
                 if self.simbolo.termo == ")":
                     self.obtemSimbolo()
@@ -322,10 +364,13 @@ class AnalisadorSintatico:
         print("<fator>")
         if self.simbolo.tipo == "ident":
             self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)])
             self.obtemSimbolo()
         elif self.simbolo.tipo == "numero_int":
+            self.stackCodigoGerado.push(['CRCT', self.simbolo.termo])
             self.obtemSimbolo()
         elif self.simbolo.tipo == "numero_real":
+            self.stackCodigoGerado.push(['CRCT', self.simbolo.termo])
             self.obtemSimbolo()
         elif self.simbolo.termo == "(":
             self.obtemSimbolo()
@@ -343,16 +388,19 @@ class AnalisadorSintatico:
         self.tokens_saida.append("<comando>")
         print("<comando>")
         if self.simbolo.termo == "read":
+            self.stackCodigoGerado.push(['LEIT', '']) #cod fazendo leitura
             self.obtemSimbolo()
-            self.parIdent()
+            self.parIdent(2)
         elif self.simbolo.termo == "write":
             self.obtemSimbolo()
-            self.parIdent()
+            self.parIdent(1)
         elif self.simbolo.tipo == "ident":
             self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
             self.memoria['tipo']=self.tabelaHASH.getTipo(self.simbolo.termo,self.scan.LINHA)
+            simboloMemoria = self.simbolo
             self.obtemSimbolo()
             self.atribuirVal()
+            self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(simboloMemoria.termo,self.scan.LINHA)]) #escreve no endereço relativo
         elif self.simbolo.tipo == "if":
             self.obtemSimbolo()
             self.condicional()
@@ -365,6 +413,7 @@ class AnalisadorSintatico:
         print("<variaveis>")
         if self.simbolo.tipo == "ident":
             self.tabelaHASH.inserir(self.simbolo.tipo,self.simbolo.termo,self.memoria["tipo"],self.scan.LINHA)#regra semantica para identificar unicidade do identificador
+            self.stackCodigoGerado.push(['ALME', 1]) #cod definir variável
             self.obtemSimbolo()
             self.maisVar()
         else:

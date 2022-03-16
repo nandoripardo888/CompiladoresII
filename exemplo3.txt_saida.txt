@@ -1,0 +1,40 @@
+########################################
+########################################
+				VARIAVEIS
+termo | token | valor | usado | tipo
+########################################
+a|ident||used|real|0
+########################################
+########################################
+########################################
+########################################
+			\FUNCTIONS
+termo | token | valor | usado | tipo
+<programa>
+<corpo>
+<dc>
+<dcV>
+<variaveis>
+<maisVar>
+<maisDc>
+<comandos>
+<comando>
+<parIdent>
+<maisComandos>
+<comandos>
+<comando>
+<atribuirVal>
+<expressao>
+<termo>
+<opUn>
+<fator>
+<maisFatores>
+<outrosTermos>
+<opAd>
+<fator>
+<maisFatores>
+<opMul>
+<fator>
+<maisFatores>
+<maisComandos>
+TUDO CERTO
