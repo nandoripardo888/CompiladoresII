@@ -1,40 +1,54 @@
 ########################################
 ########################################
 				VARIAVEIS
-termo | token | valor | usado | tipo
+termo | token | valor | usado | tipo | EnderecoRelativo
 ########################################
 a|ident||used|real|0
+b|ident||used|real|1
 ########################################
 ########################################
 ########################################
 ########################################
 			\FUNCTIONS
-termo | token | valor | usado | tipo
+termo | token | valor | usado | tipo | EnderecoRelativo
 <programa>
 <corpo>
 <dc>
 <dcV>
 <variaveis>
 <maisVar>
+<variaveis>
+<maisVar>
 <maisDc>
 <comandos>
 <comando>
-<parIdent>
-<maisComandos>
-<comandos>
-<comando>
-<atribuirVal>
+<condicional>
+<condicao>
 <expressao>
 <termo>
 <opUn>
 <fator>
 <maisFatores>
 <outrosTermos>
-<opAd>
+<relacao>
+<expressao>
+<termo>
+<opUn>
 <fator>
 <maisFatores>
-<opMul>
-<fator>
-<maisFatores>
+<outrosTermos>
+<comandos>
+<comando>
+<parIdent>
+<maisComandos>
+<pFalsa>
+<comandos>
+<comando>
+<parIdent>
+<maisComandos>
+<maisComandos>
+<comandos>
+<comando>
+<parIdent>
 <maisComandos>
 TUDO CERTO

@@ -65,7 +65,7 @@ def escreverDocumento(path,lista,listaVar):
     with open(path, 'w') as f:
         f.write("#"*40 + "\n" + "#"*40 + "\n")
         f.write("\t\t\t\tVARIAVEIS\n")
-        f.write("%s\n" % " | ".join(["termo","token","valor","usado","tipo"]))
+        f.write("%s\n" % " | ".join(map(str,["termo","token","valor","usado","tipo","EnderecoRelativo"])))
         f.write("#"*40 + "\n")
         for item in listaVar:
             #f.write("%s\n" % item)
@@ -74,7 +74,7 @@ def escreverDocumento(path,lista,listaVar):
         f.write("#"*40 + "\n" + "#"*40 + "\n")
         f.write("#"*40 + "\n" + "#"*40 + "\n")
         f.write("\t\t\t\FUNCTIONS\n")
-        f.write("%s\n" % " | ".join(["termo","token","valor","usado","tipo"]))
+        f.write("%s\n" % " | ".join(map(str,["termo","token","valor","usado","tipo","EnderecoRelativo"])))
         for item in lista:
             f.write("%s\n" % item)
         f.close
@@ -249,20 +249,26 @@ class AnalisadorSintatico:
         print("<condicional>")
         self.condicao()
         if self.simbolo.termo == "then":
+            posicaoInicioIf = self.stackCodigoGerado.size() #Salva na recursão o index do if na pilha, para futuramente trocar o valor next, para onde ele deve saltar caso seja false
+            self.stackCodigoGerado.push(['DSVF', 'NEXT']) #cod entra no comando da condição
             self.obtemSimbolo()
             self.comandos()
-            self.pFalsa()
+            posicaoFimIf = self.stackCodigoGerado.size() #Salva na recursão o index do if na pilha, para futuramente trocar o valor next, para onde ele deve saltar após entrar no if e finalizar os comandos
+            self.stackCodigoGerado.push(['DSVS', 'NEXT'])
+            self.pFalsa(posicaoInicioIf)
             if self.simbolo.termo == "$":
+                self.stackCodigoGerado.items[posicaoFimIf][1] = self.stackCodigoGerado.size()
                 self.obtemSimbolo()
             else:
                 raise Exception('Erro sintatico, esperado "$" LINHA:' + str(self.scan.LINHA))
         else:
             raise Exception('Erro sintatico, esperado "then" LINHA:' + str(self.scan.LINHA))
 
-    def pFalsa(self):
+    def pFalsa(self,posicaoInicioIf):
         self.tokens_saida.append("<pFalsa>")
         print("<pFalsa>")
         if self.simbolo.termo == "else":
+            self.stackCodigoGerado.items[posicaoInicioIf][1] = self.stackCodigoGerado.size()
             self.obtemSimbolo()
             self.comandos()
         else:
@@ -272,28 +278,33 @@ class AnalisadorSintatico:
         self.tokens_saida.append("<condicao>")
         print("<condicao>")
         self.expressao()
-        self.relacao()
+        relacao = self.relacao()
         self.expressao()
+        self.stackCodigoGerado.push(relacao)
 
     def relacao(self):
         self.tokens_saida.append("<relacao>")
         print("<relacao>")
         if self.simbolo.termo == "=":
             self.obtemSimbolo()
+            return  ['CPIG', '']
         elif self.simbolo.termo == "<":
             self.obtemSimbolo()
             if self.simbolo.termo == ">":
                 self.obtemSimbolo()
+                return  ['CDES', '']
             if self.simbolo.termo == "=":
                 self.obtemSimbolo()
+                return  ['CPMI', '']
             else:
-                pass
+                return ['CPME', '']
         elif self.simbolo.termo == ">":
             self.obtemSimbolo()
             if self.simbolo.termo == "=":
                 self.obtemSimbolo()
+                return  ['CMAI', '']
             else:
-                pass
+                return  ['CPMI', '']
         else:
             raise Exception('Erro sintatico, esperado "operador" LINHA:' + str(self.scan.LINHA))
 

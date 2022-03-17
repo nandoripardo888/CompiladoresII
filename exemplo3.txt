@@ -1,6 +1,10 @@
 program teste
-	real: a
+	real: a,b
 begin 
-	read(a);
-  	a := 5.0 + 2.0 * 3.0
+	if a > b then
+  		write(a)
+  	else
+  		write(b)
+  	$;
+	read(b)
 end

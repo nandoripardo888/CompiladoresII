@@ -29,3 +29,5 @@ for arq in lista:
 
 for i in range(len(lista)):
     print(lista[i].replace("./","") + " -> " + lista2[i])
+
+print("\n".join(map(str,sintatico.stackCodigoGerado.items)))
