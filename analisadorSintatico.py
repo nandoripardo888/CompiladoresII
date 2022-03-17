@@ -333,12 +333,16 @@ class AnalisadorSintatico:
     def outrosTermos(self):
         self.tokens_saida.append("<outrosTermos>")
         print("<outrosTermos>")
-        if self.simbolo.termo == "+" or self.simbolo.termo == "-":
+        if self.simbolo.termo == "+":
             self.opAd()
-            self.fator()
-            self.maisFatores()
-        else:
-            pass
+            self.termo()
+            self.outrosTermos()
+            self.stackCodigoGerado.push(['SOMA', ''])
+        elif  self.simbolo.termo == "-":
+            self.opAd()
+            self.termo()
+            self.outrosTermos()
+            self.stackCodigoGerado.push(['SUBT', ''])
 
     def opAd(self):
         self.tokens_saida.append("<opAd>")
@@ -367,6 +371,12 @@ class AnalisadorSintatico:
             self.opMul()
             self.fator()
             self.maisFatores()
+            self.stackCodigoGerado.push(['MULT', ''])
+        if self.simbolo.termo == "/":
+            self.opMul()
+            self.fator()
+            self.maisFatores()
+            self.stackCodigoGerado.push(['DIVI', ''])
         else:
             pass
     
