@@ -287,24 +287,24 @@ class AnalisadorSintatico:
         print("<relacao>")
         if self.simbolo.termo == "=":
             self.obtemSimbolo()
-            return  ['CPIG', '']
+            return  ['CPIG', ''] #cod igual
         elif self.simbolo.termo == "<":
             self.obtemSimbolo()
             if self.simbolo.termo == ">":
                 self.obtemSimbolo()
-                return  ['CDES', '']
+                return  ['CDES', ''] #cod desigual
             if self.simbolo.termo == "=":
                 self.obtemSimbolo()
-                return  ['CPMI', '']
+                return  ['CPMI', ''] #cod menor igual
             else:
-                return ['CPME', '']
+                return ['CPME', ''] #cod menor
         elif self.simbolo.termo == ">":
             self.obtemSimbolo()
             if self.simbolo.termo == "=":
                 self.obtemSimbolo()
-                return  ['CMAI', '']
+                return  ['CMAI', ''] #cod maior igual
             else:
-                return  ['CPMI', '']
+                return  ['CPMA', ''] #cod maior
         else:
             raise Exception('Erro sintatico, esperado "operador" LINHA:' + str(self.scan.LINHA))
 
@@ -425,10 +425,13 @@ class AnalisadorSintatico:
         elif self.simbolo.tipo == "if":
             self.obtemSimbolo()
             self.condicional()
+        elif self.simbolo.tipo == "while":
+            self.obtemSimbolo()
+            self.loopWhile()
         else:
             raise Exception('Erro sintatico, esperado "comando" LINHA:' + str(self.scan.LINHA))   
 
-    
+
     def variaveis(self):
         self.tokens_saida.append("<variaveis>")
         print("<variaveis>")
@@ -449,6 +452,22 @@ class AnalisadorSintatico:
         else:
             pass
     
+    def loopWhile(self):
+        self.tokens_saida.append("<loopWhile>")
+        print("<loopWhile>")
+        posicaoInicioWhile = self.stackCodigoGerado.size() #posição inicial do while, para ser armazenada no desvia sempre, para sempre voltar do inicio
+        self.condicao()
+        posicaoWhileTrocarNext =  self.stackCodigoGerado.size() #Salva na recursão o index do while na pilha, para futuramente trocar o valor next, para onde ele deve saltar caso seja a condição retorne false
+        self.stackCodigoGerado.push(['DSVF', 'NEXT']) #cod faz desvio caso seja falso D[s] = 0
+        if self.simbolo.tipo == "do":
+            self.obtemSimbolo()
+            self.comandos()
+            self.stackCodigoGerado.push(['DSVS', posicaoInicioWhile])
+            if self.simbolo.tipo == "$":
+                self.stackCodigoGerado.items[posicaoWhileTrocarNext][1] = self.stackCodigoGerado.size()
+                self.obtemSimbolo()
+            
+            
 
 """sintatico = AnalisadorSintatico(r'entradas.txt')
 sintatico.analise()

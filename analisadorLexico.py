@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from os import SEEK_CUR, supports_effective_ids
+from pickle import FALSE
 from typing import ChainMap, Hashable
 
 tabelaSimbolo={
@@ -14,6 +15,8 @@ tabelaSimbolo={
     ">=":"relacao",
     "<":"relacao",
     "<=":"relacao",
+    "while":"while",
+    "do":"do",
     "if":"if",
     "then":"then",
     "else":"else",
@@ -47,7 +50,7 @@ class HashTable_:
     DefOpeAritmeticos = ["+","-","*","/"]
     defOperadores = ["=","<>",">",">=","<","<=",":="]
     defSimbolos = ["{","}","(",")",",","$",";",":"]
-    defKeywords = ["while","for","if","then","else","write","read","integer","real","program","begin","end"]
+    defKeywords = ["while","do","for","if","then","else","write","read","integer","real","program","begin","end"]
     def getKeywordsValidos(word_):
         if word_ in HashTable_.defKeywords:
             return getSimbolo(word_)
@@ -92,6 +95,7 @@ class Token:
         pass
 
 class ScannerLexema:
+    COMENTARIOATIVO = False
     LINHA = 1
     def __str__(self):
         return ''.join(self.conteudo)
@@ -150,6 +154,8 @@ class ScannerLexema:
             char_ = self.nextChar()
             # estado 0, verifica se é letra, digito ou espaço em branco
             if self.estado == 0:
+                if self.COMENTARIOATIVO and char_ != "*" and char_ != "}":
+                    continue
                 if (self.isletra(char_)):
                     termo +=char_
                     self.estado = 1
@@ -214,6 +220,27 @@ class ScannerLexema:
                 #    termo += char_
                 #else:
                     self.back(char_)
+                    if termo == "{":
+                        self.COMENTARIOATIVO = True
+                        self.estado = 0
+                        termo = ''
+                        continue
+                    elif termo == "}":
+                        self.COMENTARIOATIVO = False
+                        termo = ''
+                        continue
+                    elif termo == "/*":
+                         self.COMENTARIOATIVO = True
+                         self.estado = 0
+                         termo = ''
+                         continue
+                    elif termo == '*\\':
+                        self.COMENTARIOATIVO = False
+                        self.estado = 0
+                        termo = ''
+                        continue
+                    
+                    
                     self.estado = 8
             if (self.estado == 8):
                 if termo  in tabelaSimbolo.keys():
