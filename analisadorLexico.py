@@ -37,7 +37,8 @@ tabelaSimbolo={
     ",":",",
     ":":":",
     "$":"$",
-    ";":";"
+    ";":";",
+    "procedure":"procedure"
 }
 
 def getSimbolo(word_):
@@ -50,7 +51,7 @@ class HashTable_:
     DefOpeAritmeticos = ["+","-","*","/"]
     defOperadores = ["=","<>",">",">=","<","<=",":="]
     defSimbolos = ["{","}","(",")",",","$",";",":"]
-    defKeywords = ["while","do","for","if","then","else","write","read","integer","real","program","begin","end"]
+    defKeywords = ["procedure","while","do","for","if","then","else","write","read","integer","real","program","begin","end"]
     def getKeywordsValidos(word_):
         if word_ in HashTable_.defKeywords:
             return getSimbolo(word_)

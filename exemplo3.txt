@@ -1,8 +1,10 @@
 program teste
-	real: a,b
-	{teste}
-begin 
-	while a > b do
+	real: a,b;
+	procedure teste(real:a)
+	begin
 		read(a)
-	$
+	end
+begin
+	read(a);s
+	teste(a)
 end

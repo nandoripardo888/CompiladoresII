@@ -1,3 +1,4 @@
+from ast import arguments
 from inspect import stack
 from ntpath import join
 from os import scandir
@@ -12,50 +13,86 @@ class tabelaHsh():
     def __init__(self):
         self.tabelaSimbolo = []
         self.enderecoRelativo = 0
+        #controla as procedures na tabela de simbolos
+        self.escopo = 0
+        self.tamanhoPilhaD = 0
 
-    def emTabela(self,termo):    
+    # uso para verificar se existe no escopo
+    def emTabelaEscopo(self,termo,escopo):
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                return True
+        return False
+
+    #uso para verficiar em qualquer escopo
+    def emTabela(self,termo,escopo):    
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                return True
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 return True
         return False
 
-    def simboloEncontrado(self,termo,linha):
-        if not(self.emTabela(termo)):
+    def simboloEncontrado(self,termo,escopo,linha):
+        if not(self.emTabela(termo,escopo)):
             raise ValueError('Erro semantico, o identificador "'+ termo +'" não foi declado LINHA:' + str(linha))
         else:
             pass
     
-    # 5 valores -> termo|token|valor|usado|tipo|EnderecoRelativo <-#
-    def inserir(self,token,termo,tipo,linha):
-        if not(self.emTabela(termo)):
-            self.tabelaSimbolo.append([termo,token,"","",tipo,self.enderecoRelativo])
+    # 5 valores -> termo|token|valor|usado|tipo|EnderecoRelativo|escopo|enderecoPilhaD|enderecoPilhaC <-#
+    # o parametro enderecoPilhaC é somente para ser passado no caso de função
+    def inserir(self,token,termo,tipo,enderecoPilhaC,linha):
+        if not(self.emTabelaEscopo(termo,self.escopo)):
+            self.tabelaSimbolo.append([termo,token,"","",tipo,self.enderecoRelativo,self.escopo,self.tamanhoPilhaD,enderecoPilhaC])
             self.enderecoRelativo+=1
+            self.tamanhoPilhaD+=1
         else:
             raise Exception('Erro semantico, já foi declarado uma variável com este mesmo nome "'+ termo +'" --> LINHA:' + str(linha))
 
-    def addValor(self,termo,valor):
-        self.simboloEncontrado(termo,0)
+    def addValor(self,termo,escopo,valor):
+        self.simboloEncontrado(termo,escopo,0)
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                elemento[2] = valor
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 elemento[2] = valor
 
-    def getTipo(self,termo,linha):
-        self.simboloEncontrado(termo,linha)
+    def getTipo(self,termo,escopo,linha):
+        self.simboloEncontrado(termo,escopo,linha)
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                return elemento[4]
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 return elemento[4]
     
-    def getEnderecoRelativo(self,termo,linha):
-        self.simboloEncontrado(termo,linha)
+    def getEnderecoRelativo(self,termo,escopo,linha):
+        self.simboloEncontrado(termo,escopo,linha)
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                return elemento[5]
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 return elemento[5]
 
-    def setVarUtilizada(self,termo,linha):
-        self.simboloEncontrado(termo,linha)
+    def setVarUtilizada(self,termo,escopo,linha):
+        self.simboloEncontrado(termo,escopo,linha)
+        for elemento in self.tabelaSimbolo:
+            if elemento[0] == termo and elemento[6] == escopo:
+                elemento[3] = 'used'
         for elemento in self.tabelaSimbolo:
             if elemento[0] == termo:
                 elemento[3] = 'used'
+    
+    def getEnderecoPilha(self,termo,escopo,linha):
+         self.simboloEncontrado(termo,escopo,linha)
+         for elemento in self.tabelaSimbolo:
+             if elemento[0] == termo and elemento[6] == escopo:
+                if elemento[4] == 'procedure':
+                    return elemento[8]
+
                 
     
 
@@ -94,9 +131,9 @@ class AnalisadorSintatico:
         if self.ControleOperacaoVariavel == 1 :
             self.stackCodigoGerado.push(['ALME', 1]) #cod declarar variável
         elif self.ControleOperacaoVariavel == 2 :
-            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.scan.LINHA)])
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.tabelaHASH.escopo,self.scan.LINHA)])
         else:
-            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.scan.LINHA)]) #escreve no endereço relativo
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(termo,self.tabelaHASH.escopo,self.scan.LINHA)]) #escreve no endereço relativo
 
 
          
@@ -111,6 +148,9 @@ class AnalisadorSintatico:
         self.stackCodigoGerado = Stack()
         #VARIAVEIS DE CONTROLE
         self.ControleOperacaoVariavel = 1 # controla <variveis> ao usar a função gerarCodigoDeOperacaoVariavel
+        #CONTROLA PROCEDURES
+        self.escopo = 0
+        self.tamanhoPilhaD = 0
 
     def obtemSimbolo(self):
         self.token = self.scan.NextToken()
@@ -160,12 +200,147 @@ class AnalisadorSintatico:
     def dc(self):
         self.tokens_saida.append("<dc>")
         print("<dc>")
-        if self.simbolo.tipo == "tipo_var":
+        if self.simbolo.tipo == "procedure":
+            self.memoria["tipo"] = self.simbolo.termo
+            self.escopo +=1
+            self.obtemSimbolo()
+            self.dcP()
+        elif self.simbolo.tipo == "tipo_var":
+            self.memoria["tipo"] = self.simbolo.termo
+            self.obtemSimbolo()
             self.dcV()
             self.maisDc()
         else :
             pass
     
+    def dcP(self):
+        self.tokens_saida.append("<dcP>")
+        print("<dcP>")
+        if self.simbolo.tipo == "ident":
+                if self.tabelaHASH.escopo == 0: # caso futuramente permita criar mais de uma procedure então verificar se está no primeiro escopo, gerar somente uma vez esse salto, e não ao inicio de cada função
+                    posicaoSaltoBeginPrincipal = self.stackCodigoGerado.size() #guardo a posção da função na pilha que salta para o begin principal
+                    self.stackCodigoGerado.push(['DSVI','BEGIN'])
+                self.tabelaHASH.inserir(self.simbolo.tipo,self.simbolo.termo,self.memoria["tipo"],self.stackCodigoGerado.size(),self.scan.LINHA)#regra semantica para identificar unicidade do identificador e inserir na tabela
+                self.tabelaHASH.escopo=1 # como vai ser permitido somente 1 procedure, posso deixar estatico 1, do contrario, poderia ir crescendo esse escopo
+                tamanhoPilhaDAtual = self.tabelaHASH.tamanhoPilhaD
+                self.obtemSimbolo()
+                self.parametros()
+                self.corpoP()
+                m = self.tabelaHASH.tamanhoPilhaD - tamanhoPilhaDAtual
+                self.stackCodigoGerado.push(['DESM', m ])
+                self.stackCodigoGerado.push(['RTPR', '' ])
+                self.tabelaHASH.tamanhoPilhaD = tamanhoPilhaDAtual # caso queira permitir mais procedures uma dia mais procedures um dia, 
+                self.tabelaHASH.escopo = 0
+                self.stackCodigoGerado.items[posicaoSaltoBeginPrincipal][1] = self.stackCodigoGerado.size()
+
+
+    
+    def parametros(self):
+        self.tokens_saida.append("<parametros>")
+        print("<parametros>")
+        if self.simbolo.tipo == "(":
+            self.obtemSimbolo()
+            self.listaPar()
+            if self.simbolo.tipo == ")":
+                self.obtemSimbolo()
+            else:
+                raise Exception('Erro sintatico, esperado ")" LINHA:' + str(self.scan.LINHA))
+        else:
+             pass
+
+    def listaPar(self):
+        self.tokens_saida.append("<parametros>")
+        print("<parametros>")
+        if self.simbolo.tipo == "tipo_var":
+            self.obtemSimbolo()
+            if self.simbolo.termo == ":":
+                self.obtemSimbolo()
+                self.variaveis()
+                self.maisPar()
+            else:
+                raise Exception('Erro sintatico, esperado ":" LINHA:' + str(self.scan.LINHA))
+        else:
+             raise Exception('Erro sintatico, esperado "tipo_var" LINHA:' + str(self.scan.LINHA))
+
+    def maisPar(self):
+        self.tokens_saida.append("<maisPar>")
+        print("<maisPar>")
+        if self.simbolo.tipo == ";":
+            self.obtemSimbolo()
+            self.listaPar()
+        else:
+            pass
+    
+    def corpoP(self):
+        self.tokens_saida.append("<corpoP>")
+        print("<corpoP>")
+        self.dcLoc()
+        if self.simbolo.tipo == "begin":
+            self.obtemSimbolo()
+            self.comando()
+            if self.simbolo.tipo == "end":
+                self.obtemSimbolo()
+            else:
+                raise Exception('Erro sintatico, esperado "end" LINHA:' + str(self.scan.LINHA))
+        else:
+            raise Exception('Erro sintatico, esperado "begin" LINHA:' + str(self.scan.LINHA))
+
+        
+
+
+    
+    def dcLoc(self):
+        self.tokens_saida.append("<dcLoc>")
+        print("<dcLoc>")
+        if self.simbolo.tipo == "tipo_var":
+            self.obtemSimbolo()
+            self.dcV()
+            self.maisDcLoc()
+        else:
+            pass
+    
+    def maisDcLoc(self):
+        self.tokens_saida.append("<maisDcLoc>")
+        print("<maisDcLoc>")
+        if self.simbolo.tipo ==";":
+            self.obtemSimbolo()
+            self.dcLoc
+        else:
+            pass
+
+    
+    def listaArg(self):
+        self.tokens_saida.append("<listaArg>")
+        print("<listaArg>")
+        self.argumentos()
+        if self.simbolo.termo == ")":
+            self.obtemSimbolo()
+        else:
+            raise Exception('Erro sintatico, esperado ")" LINHA:' + str(self.scan.LINHA))
+            
+
+    def argumentos(self):
+        self.tokens_saida.append("<argumentos>")
+        print("<argumentos>")
+        if self.simbolo.tipo == "ident":
+            self.stackCodigoGerado.push(['PARAM',self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)])
+            self.obtemSimbolo()
+            self.maisIdent()
+        else:
+            raise Exception('Erro sintatico, esperado "ident" LINHA:' + str(self.scan.LINHA))
+
+    def maisIdent(self):
+        self.tokens_saida.append("<maisIdent>")
+        print("maisIdent")
+        if self.simbolo.termo == ",":
+            self.obtemSimbolo()
+            self.argumentos()
+        else:
+            pass
+    
+
+
+
     def maisDc(self):
         self.tokens_saida.append("<maisDc>")
         print("<maisDc>")
@@ -179,17 +354,11 @@ class AnalisadorSintatico:
     def dcV(self):
         self.tokens_saida.append("<dcV>")
         print("<dcV>")
-        if self.simbolo.tipo == "tipo_var":
-            self.memoria["tipo"] = self.simbolo.termo
-            self.obtemSimbolo()
-            if self.simbolo.termo == ":":
+        if self.simbolo.termo == ":":
                 self.obtemSimbolo()
-                self.variaveis()
-                self.obtemSimbolo
-            else:
+                self.variaveis() #troquei caso de erro, eu troquei o obtem simbolo que estava aqui abaixo, e coloquei no variaveis
+        else:
                 raise Exception('Erro sintatico, esperado ":" LINHA:' + str(self.scan.LINHA))
-        else :
-            pass
 
     def comandos(self):
         self.tokens_saida.append("<comandos>")
@@ -215,12 +384,12 @@ class AnalisadorSintatico:
         if self.simbolo.termo == "(":
             self.obtemSimbolo()
             if self.simbolo.tipo == "ident":
-                self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
+                self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
                 #cod faz imprime ou READ ou WRITE
                 if tipoOperacao == 1 :
-                    self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)])
+                    self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)])
                 elif tipoOperacao == 2:
-                    self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)]) #escreve no endereço relativo
+                    self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)]) #escreve no endereço relativo
                 self.obtemSimbolo()
                 if self.simbolo.termo == ")":
                     self.obtemSimbolo()
@@ -234,15 +403,11 @@ class AnalisadorSintatico:
     def atribuirVal(self):
         self.tokens_saida.append("<atribuirVal>")
         print("<atribuirVal>")
-        if self.simbolo.termo == ":":
-            self.obtemSimbolo()
-            if self.simbolo.termo == "=":
-                    self.obtemSimbolo()
-                    self.expressao()
-            else:
-                raise Exception('Erro sintatico, esperado "=" LINHA:' + str(self.scan.LINHA))
+        if self.simbolo.termo == "=":
+                self.obtemSimbolo()
+                self.expressao()
         else:
-            raise Exception('Erro sintatico, esperado ":" LINHA:' + str(self.scan.LINHA))
+            raise Exception('Erro sintatico, esperado "=" LINHA:' + str(self.scan.LINHA))
 
     def condicional(self):
         self.tokens_saida.append("<condicional>")
@@ -384,8 +549,8 @@ class AnalisadorSintatico:
         self.tokens_saida.append("<fator>")
         print("<fator>")
         if self.simbolo.tipo == "ident":
-            self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
-            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.scan.LINHA)])
+            self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
+            self.stackCodigoGerado.push(['CRVL', self.tabelaHASH.getEnderecoRelativo(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)])
             self.obtemSimbolo()
         elif self.simbolo.tipo == "numero_int":
             self.stackCodigoGerado.push(['CRCT', self.simbolo.termo])
@@ -416,12 +581,23 @@ class AnalisadorSintatico:
             self.obtemSimbolo()
             self.parIdent(1)
         elif self.simbolo.tipo == "ident":
-            self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
-            self.memoria['tipo']=self.tabelaHASH.getTipo(self.simbolo.termo,self.scan.LINHA)
+            self.tabelaHASH.setVarUtilizada(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)#regra semantica seta que a variável foi utilizada
+            self.memoria['tipo']=self.tabelaHASH.getTipo(self.simbolo.termo,self.tabelaHASH.escopo,self.scan.LINHA)
             simboloMemoria = self.simbolo
             self.obtemSimbolo()
-            self.atribuirVal()
-            self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(simboloMemoria.termo,self.scan.LINHA)]) #escreve no endereço relativo
+            if self.simbolo.termo == ":":
+                self.obtemSimbolo()
+                self.atribuirVal()
+                self.stackCodigoGerado.push(['ARMZ', self.tabelaHASH.getEnderecoRelativo(simboloMemoria.termo,self.tabelaHASH.escopo,self.scan.LINHA)]) #escreve no endereço relativo
+            elif self.simbolo.termo == "(":
+                posicaoPusher = self.stackCodigoGerado.size()
+                self.stackCodigoGerado.push(['PUSHER','PUSHER'])
+                self.obtemSimbolo()
+                self.listaArg()
+                self.stackCodigoGerado.push(['CHPR',self.tabelaHASH.getEnderecoPilha(simboloMemoria.termo,self.tabelaHASH.escopo,self.scan.LINHA)])
+                self.stackCodigoGerado.items[posicaoPusher][1] = self.stackCodigoGerado.size()
+            else:
+                raise Exception('Erro sintatico, esperado uma expressão ou uma funcão LINHA:' + str(self.scan.LINHA))  
         elif self.simbolo.tipo == "if":
             self.obtemSimbolo()
             self.condicional()
@@ -436,10 +612,11 @@ class AnalisadorSintatico:
         self.tokens_saida.append("<variaveis>")
         print("<variaveis>")
         if self.simbolo.tipo == "ident":
-            self.tabelaHASH.inserir(self.simbolo.tipo,self.simbolo.termo,self.memoria["tipo"],self.scan.LINHA)#regra semantica para identificar unicidade do identificador
+            self.tabelaHASH.inserir(self.simbolo.tipo,self.simbolo.termo,self.memoria["tipo"],"",self.scan.LINHA)#regra semantica para identificar unicidade do identificador
             self.stackCodigoGerado.push(['ALME', 1]) #cod definir variável
             self.obtemSimbolo()
             self.maisVar()
+            #self.obtemSimbolo()
         else:
             raise Exception('Erro sintatico, esperado "ident" LINHA:' + str(self.scan.LINHA))
     
@@ -466,6 +643,8 @@ class AnalisadorSintatico:
             if self.simbolo.tipo == "$":
                 self.stackCodigoGerado.items[posicaoWhileTrocarNext][1] = self.stackCodigoGerado.size()
                 self.obtemSimbolo()
+
+    
             
             
 
