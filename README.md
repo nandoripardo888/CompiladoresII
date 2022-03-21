@@ -1,5 +1,14 @@
 
 # trabalho de Compiladores II
+
+## Arquivos de códigos-fonte presentes
+1. **main.py** - executa todo o código fonte.
+2. **analisadorSintatico.py** - contém o arquivo do analisador sintático.
+3. **analisadorLexico.py** - contém o código analisador Léxico.
+4. **exemplo1.txt** - contém um arquivo de programa a ser analisado.
+5. **exemplo2.txt** - contém um arquivo de programa inválido a ser analisado.
+
+
 ### introdução
 Este projeto é a implementação de um compilador, onde foi implementado um gerador de codigo intermediário e uma maquina hipotetica para a execução deste codigo. O gerador de código gera uma pilha de instruções PÓS-FIXA e a maquina hipotética com o auxilio de pilhas de dados e alguns registradores executa e gera a saída do código.
 
