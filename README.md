@@ -5,8 +5,11 @@
 1. **main.py** - executa todo o código fonte.
 2. **analisadorSintatico.py** - contém o arquivo do analisador sintático.
 3. **analisadorLexico.py** - contém o código analisador Léxico.
-4. **exemplo1.txt** - contém um arquivo de programa a ser analisado.
-5. **exemplo2.txt** - contém um arquivo de programa inválido a ser analisado.
+4. **MaqHip.py** - contém o código da Maquina Hipotética.
+5. **exemplo1.txt** - contém um arquivo de programa a ser analisado, o mesmo ex1 do slide 13.
+6. **exemplo2.txt** - contém um arquivo de programa a ser analisado, o mesmo ex2 do slide 13.
+7. **exemplo1_saida.txt** - contém um arquivo de saída do  exemplo1.txt.
+8. **exemplo2_saida.txt** - contém um arquivo de saída do  exemplo2.txt.
 
 
 ### introdução
