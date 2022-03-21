@@ -108,6 +108,30 @@ abaixo segue a tabela da GLC mapeada com a respectiva intrução gerada.
 
 como vimos na tabela acima, os códigos são gerados na hora da analise sintática, e utiliza a operação pós fixa, abaixo segue a tabela com as instruções geradas
 
+| INSTRUÇÃO  |    |
+| ------------ | ------------ |
+|  CRCT k | carrega constante k na pilha D  |
+| CRVL n  | carrega valor de endereço n na pilha D |
+| SOMA   |soma topo da pilha com seu antecessor   |
+| SUBT   | subtrai o elemento do topo do antecessor  |
+| MULT   |  multiplica elemento do topo pelo antecessor |
+| DIVI  |divide elemento do antecessor pelo do topo   |
+|  INVE  | inverte sinal do topo  |
+| CPME   | comparação de menor  |
+| CPMA   | comparação de maior  |
+|  CPIG  | comparação de igualdade  |
+| CDES   | comparação de desigualdade  |
+| CPMI   | comparação <=  |
+| CMAI   | comparação >=  |
+| ARMZ n  | armazena o topo da pilha no endereço n de D  |
+| DSVI p   | desvio incondicional para a instrução de endereço p  |
+| DSVF p   |desvie para a instrução de endereço p caso a condição resultante seja falsa   |
+|  PARAM | Aloca memória e copia valor da posição n para o topo de D  |
+| PUSHER e  | Empilha o índice e da instrução seguinte à chamada do procedimento |
+| CHPR p  | Desvia para instrução de índice p no array C, obtido na TS  |
+|  DESM m | Desaloca m posições de memória, a partir do topo s de D  |
+| RTPR  | Retorna do procedimento – endereço de retorno estará no topo de D – e desempilha o endereço  |
+
 
 
 ## Maquina Hipotética
@@ -124,9 +148,6 @@ para a maquina Hipotetica foi criado os seguintes componentes
 
 a maquina hipotetica faz a leitura da pilha de código e execura cada uma das instruções. 
 há um modo debug, onde é setado para Sim ou Não ao iniciar o programa, no modo debug, o usuário não se preocupa em digitar os valores de entrada, ele seta todas as entradas para o valor 10, para que o usuário (Professor) apenas sente, relaxe, e veja a saída.
-
-
-
 
 ## Informações Gerais: 
 - O analisador sintático construído foi do tipo Descendente Preditivo Recursivo. Para cada símbolo não-terminal da gramática, uma nova função foi construída. As produções da gramática foram representadas por chamadas sucessivas dessas funções.
