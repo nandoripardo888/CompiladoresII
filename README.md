@@ -3,6 +3,8 @@
 ### introdução
 Este projeto é a implementação de um compilador, onde foi implementado um gerador de codigo intermediário e uma maquina hipotetica para a execução deste codigo. O gerador de código gera uma pilha de instruções PÓS-FIXA e a maquina hipotética com o auxilio de pilhas de dados e alguns registradores executa e gera a saída do código.
 
+<p style="text-align:center"><img alt="" height="403" src="https://github.com/nandoripardo888/CompiladoresII/blob/master/modeloComp.PNG" width="582" /></p>
+
 > O foco deste trabalho, está na geração de código e maquina hipotetica, no entanto algumas partes que são necessárias para a construção de um compilador (Análise léxica, sintática e semântica) também são apresentadas aqui.
 
 ##### O desenvolvimento está dividido nas seguintes partes
@@ -38,7 +40,8 @@ O automato a seguir valida a formações dos Tokens
 
 <h3 style="text-align:center">autômato analisador</h3>
 
-<p style="text-align:center"><img alt="" height="403" src="https://github.com/nandoripardo888/CompiladoresPy/blob/main/automato.png" width="582" /></p>
+<p style="text-align:center"><img alt="" height="300" src="https://github.com/nandoripardo888/CompiladoresPy/blob/main/automato.png" width="400" /></p>
+
 
 ## Analisador Sintático
 ### Gram&aacute;tica Livre de Contexto da Linguagem - Forma BNF X Geração de codigo
