@@ -95,7 +95,6 @@ class MaqHip:
                     entrada = 10
                 else:
                      entrada = int(input("valor entrada: "))
-                self.ResultadoExecucao
                 self.pilhaD.push(entrada)
                 self.ResultadoExecucao.push(entrada)
                 self.i+=1
@@ -129,7 +128,7 @@ class MaqHip:
             elif instr == 'DESM':
                 for j in range(valor):
                     self.pilhaD.pop()
-                    self.i+=1
+                self.i+=1
             
             elif instr == 'RTPR':
                 self.i = self.pilhaD.pop()

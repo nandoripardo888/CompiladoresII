@@ -1,9 +1,13 @@
-program teste
-	real: a,b;
-begin 
-  if a > b then
-  	write(H)
-  else
-  	write(b)
-  $
-end
+program ex2
+integer: a,b;
+procedure p(integer:x,y)
+	integer:k;
+	begin
+		k:=x+y;
+		x:=k
+	end
+begin{principal}
+read(a);
+read(b);
+p(a,b)
+end. {principal}

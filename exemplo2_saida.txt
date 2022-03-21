@@ -1,0 +1,59 @@
+########################################
+  ALGORITMO
+
+program ex2
+integer: a,b;
+procedure p(integer:x,y)
+	integer:k;
+	begin
+		k:=x+y;
+		x:=k
+	end
+begin{principal}
+read(a);
+read(b);
+p(a,b)
+end. {principal}
+########################################
+  VARIAVEIS
+
+termo     |token     |valor     |usado     |tipo      |EndRel    |escopo    |endPilhaD |endPilhaC |numParam  
+a         |ident     |-         |used      |integer   |0         |0         |0         |          |0         
+b         |ident     |-         |used      |integer   |1         |0         |1         |          |0         
+p         |ident     |-         |used      |procedure |2         |0         |2         |4         |2         
+x         |ident     |-         |used      |integer   |3         |1         |3         |          |0         
+y         |ident     |-         |used      |integer   |4         |1         |4         |          |0         
+k         |ident     |-         |used      |integer   |5         |1         |5         |          |0         
+
+########################################
+  CODIGO GERADO
+
+0  |INPP 
+1  |ALME 1
+2  |ALME 1
+3  |DSVI 13
+4  |ALME 1
+5  |CRVL 3
+6  |CRVL 4
+7  |SOMA 
+8  |ARMZ 5
+9  |CRVL 5
+10 |ARMZ 3
+11 |DESM 3
+12 |RTPR 
+13 |LEIT 
+14 |ARMZ 0
+15 |LEIT 
+16 |ARMZ 1
+17 |PUSHER 21
+18 |PARAM 0
+19 |PARAM 1
+20 |CHPR 4
+21 |PARA 0
+
+########################################
+  SAIDA
+
+0 |10
+1 |10
+2 |Fim da execução

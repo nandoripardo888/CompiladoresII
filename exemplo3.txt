@@ -1,6 +1,0 @@
-program ex1
-integer:x;
-begin{principal}
-	x:=-5 + -(10+20) + (5*3);
-	write(x)
-end. {principal}
