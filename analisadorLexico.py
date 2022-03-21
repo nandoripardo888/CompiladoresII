@@ -38,7 +38,9 @@ tabelaSimbolo={
     ":":":",
     "$":"$",
     ";":";",
-    "procedure":"procedure"
+    ".":".",
+    "procedure":"procedure",
+    "$$":"isEof"
 }
 
 def getSimbolo(word_):
@@ -50,8 +52,8 @@ def getSimbolo(word_):
 class HashTable_:
     DefOpeAritmeticos = ["+","-","*","/"]
     defOperadores = ["=","<>",">",">=","<","<=",":="]
-    defSimbolos = ["{","}","(",")",",","$",";",":"]
-    defKeywords = ["procedure","while","do","for","if","then","else","write","read","integer","real","program","begin","end"]
+    defSimbolos = ["{","}","(",")",",","$",";",":","."]
+    defKeywords = ["$$","procedure","while","do","for","if","then","else","write","read","integer","real","program","begin","end"]
     def getKeywordsValidos(word_):
         if word_ in HashTable_.defKeywords:
             return getSimbolo(word_)
@@ -117,6 +119,9 @@ class ScannerLexema:
     def isSimbolo(self,char_):
         return char_ in ["+","-","*","/","<",">","=","{","}","(",")",",","$",";",":"]
     
+    def isPontoFinal(self,char_):
+        return char_ in ["."]
+    
     def isoperador(self,char_):
         return char_ in ["+","-","*","/","<",">","=","{","}","(",")"]
 
@@ -145,18 +150,32 @@ class ScannerLexema:
             self.pos -=1
 
     def NextToken(self):
-        if self.isEof():
-            return None
         self.estado = 0
         termo = ''
         while 1:
+            if self.isEof():
+                #return None
+                return Token(getSimbolo("$$"),"$$")
             if self.isEof():
                 self.pos = len(self.conteudo)+1
             char_ = self.nextChar()
             # estado 0, verifica se é letra, digito ou espaço em branco
             if self.estado == 0:
-                if self.COMENTARIOATIVO and char_ != "*" and char_ != "}":
-                    continue
+                if self.COMENTARIOATIVO:
+                    if char_ == "*":
+                        char_ = self.nextChar()
+                        if char_ == "/":
+                            self.COMENTARIOATIVO = False
+                            termo = ''
+                            continue
+                        else:
+                            self.back()
+                    elif char_ == "}":
+                        self.COMENTARIOATIVO = False
+                        termo = ''
+                        continue
+                    else:
+                        continue
                 if (self.isletra(char_)):
                     termo +=char_
                     self.estado = 1
@@ -166,6 +185,8 @@ class ScannerLexema:
                 elif (self.isSimbolo(char_)):
                     termo += char_
                     self.estado = 7
+                elif (self.isPontoFinal(char_)):
+                    return Token(getSimbolo("."),".")
                 elif (self.isEspaco(char_)):
                     self.estado = 0
                 elif (char_ == "$$"):
@@ -226,22 +247,15 @@ class ScannerLexema:
                         self.estado = 0
                         termo = ''
                         continue
-                    elif termo == "}":
-                        self.COMENTARIOATIVO = False
-                        termo = ''
-                        continue
-                    elif termo == "/*":
-                         self.COMENTARIOATIVO = True
-                         self.estado = 0
-                         termo = ''
-                         continue
-                    elif termo == '*\\':
-                        self.COMENTARIOATIVO = False
-                        self.estado = 0
-                        termo = ''
-                        continue
-                    
-                    
+                    elif termo == "/":
+                        char_ = self.nextChar()
+                        if char_ == "*":
+                            self.COMENTARIOATIVO = True
+                            self.estado = 0
+                            termo = ''
+                            continue
+                        else:
+                            self.back()
                     self.estado = 8
             if (self.estado == 8):
                 if termo  in tabelaSimbolo.keys():

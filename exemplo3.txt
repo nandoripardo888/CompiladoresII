@@ -1,10 +1,6 @@
-program teste
-	real: a,b;
-	procedure teste(real:a)
-	begin
-		read(a)
-	end
-begin
-	read(a);s
-	teste(a)
-end
+program ex1
+integer:x;
+begin{principal}
+	x:=-5 + -(10+20) + (5*3);
+	write(x)
+end. {principal}

@@ -1,3 +1,4 @@
+from MaqHip import MaqHip
 from analisadorSintatico import *
 import os
 
@@ -13,21 +14,23 @@ lista=[]
 lista = ['exemplo3.txt']
 print('arquivos encontrados:')
 print("\n".join(lista))
+print("----------------")
 lista2 = []
 for arq in lista:
-    sintatico = AnalisadorSintatico(arq)
-    print("*"*50)
     print(arq)
+    sintatico = AnalisadorSintatico(arq)
     try:
         sintatico.analise()
-        lista2.append("SUCESSO!")
+        MaqHipotetica = MaqHip(sintatico.tabelaHASH.tabelaSimbolo,sintatico.stackCodigoGerado)
+        MaqHipotetica.executar()
+        escreverDocumento(sintatico.path + "_saida.txt",sintatico.stackCodigoGerado.items,sintatico.tabelaHASH.tabelaSimbolo, MaqHipotetica.ResultadoExecucao.items,arq)
+        lista2.append("compilado com SUCESSO!")
+        print("arquivo gerado:" + sintatico.path + "_saida.txt")
     except Exception as inst:
         print(inst)
         sintatico.tokens_saida.append(inst)
-        lista2.append("FALHA! - " + str(inst))
-    escreverDocumento(sintatico.path + "_saida.txt",sintatico.tokens_saida,sintatico.tabelaHASH.tabelaSimbolo)
+        escreverDocumentoErro(sintatico.path + "_saida.txt",str(inst))
+    print("----------------")
 
-for i in range(len(lista)):
-    print(lista[i].replace("./","") + " -> " + lista2[i])
 
-print("\n".join(map(str,sintatico.stackCodigoGerado.items)))
+#print("\n".join(map(str,sintatico.stackCodigoGerado.items)))
