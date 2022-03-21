@@ -3,7 +3,7 @@
 ### introdução
 Este projeto é a implementação de um compilador, onde foi implementado um gerador de codigo intermediário e uma maquina hipotetica para a execução deste codigo. O gerador de código gera uma pilha de instruções PÓS-FIXA e a maquina hipotética com o auxilio de pilhas de dados e alguns registradores executa e gera a saída do código.
 
-> O foco deste trabalho, está na geração de código e maquina hipotetica, nesse sentido, serão abreviadas algumas partes que são necessárias para a construção de um compilador (Análise léxica, sintática e semântica) mas que não é foco agora.
+> O foco deste trabalho, está na geração de código e maquina hipotetica, no entanto algumas partes que são necessárias para a construção de um compilador (Análise léxica, sintática e semântica) também são apresentadas aqui.
 
 ##### O desenvolvimento está dividido nas seguintes partes
 
@@ -101,6 +101,29 @@ abaixo segue a tabela da GLC mapeada com a respectiva intrução gerada.
 - verificar se comentário '{ }' e '/\* \*/'
 
 
+## Gerador de Código
+
+como vimos na tabela acima, os códigos são gerados na hora da analise sintática, e utiliza a operação pós fixa, abaixo segue a tabela com as instruções geradas
+
+
+
+## Maquina Hipotética
+
+para a maquina Hipotetica foi criado os seguintes componentes
+#### PILHAS
+		pilhaC -> area de codigo, onde ficava armazeda as instruções
+		pilhaD -> area de dados em tempo de execução
+		tabelaSimbolo -> tabela contendo todos os simbolos do algoritmo
+
+#### Registradores
+		i -> inteiro que alocava o topo da pilha de codigo (pilhaC)
+		s -> inteiro que alocava o topo da pilha de dados (pilhaD)
+
+a maquina hipotetica faz a leitura da pilha de código e execura cada uma das instruções. 
+há um modo debug, onde é setado para Sim ou Não ao iniciar o programa, no modo debug, o usuário não se preocupa em digitar os valores de entrada, ele seta todas as entradas para o valor 10, para que o usuário (Professor) apenas sente, relaxe, e veja a saída.
+
+
+
 
 ## Informações Gerais: 
 - O analisador sintático construído foi do tipo Descendente Preditivo Recursivo. Para cada símbolo não-terminal da gramática, uma nova função foi construída. As produções da gramática foram representadas por chamadas sucessivas dessas funções.
@@ -114,3 +137,5 @@ abaixo segue a tabela da GLC mapeada com a respectiva intrução gerada.
 - No emulador terminal serão printados cada uma dos algortmos avaliádos, se foi compilado com sucesso ou não, e o resultado da execução.
 
 - por fim se o arquivo são salvos de saída são na mesma pasta da aplicação.
+
+- segue como arquivos de exemplo os algoritmos passados ao decorrer da diciplina
